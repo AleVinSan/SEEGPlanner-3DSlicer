@@ -1,0 +1,38 @@
+# Sistema operativo
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Editores
+.vscode/
+.idea/
+*.swp
+*.swo
+*.sublime-workspace
+
+# Variables de entorno
+.env
+.env.*
+!.env.example
+
+# Python y Slicer
+__pycache__/
+*.pyc
+.venv/
+venv/
+.python-version
+
+# Salidas de compilación y datos pesados / temporales
+dist/
+build/
+out/
+*.egg-info/
+*.tmp
+*.bak
+
+# Logs
+*.log
+logs/
+
+# Documentos temporales de extracción
+anteproyecto_extracted.txt
