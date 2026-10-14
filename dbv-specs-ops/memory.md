@@ -13,8 +13,8 @@
 - **Proyecto:** SEEGPlanner (Extensión para 3D Slicer para planificación de cirugía de electrodos cerebrales en estéreo-electroencefalografía).
 - **Autora:** Alejandra Viñegla Sánchez (Grado en Ingeniería de la Salud, UMA).
 - **Tutores:** Víctor Manuel Smith Fernández, David Bueno Vallejo.
-- **Estado actual del desarrollo:** Adopción a `dbv-specs-ops` finalizada. Especificaciones (`SPECIFICATIONS.md`) y Arquitectura (`ARCHITECTURE.md`) formalizadas. Iniciando Fase 2 (Estructura base de la extensión de 3D Slicer).
-- **Foco inmediato:** Crear la estructura de extensión para 3D Slicer (`SEEGPlanner/`) con clase principal, widget Qt y lógica base probada en Slicer v5.12.4.
+- **Estado actual del desarrollo:** Adopción a `dbv-specs-ops` finalizada. Especificaciones (`SPECIFICATIONS.md`) y Arquitectura (`ARCHITECTURE.md`) formalizadas. Documento central de consulta del estudiante [`ReferenciaTecnica.md`](file:///Users/bvinegla/Desktop/quinto%20curso/tfgprueba/ReferenciaTecnica.md) creado en la raíz. Plan de implementación de la Fase 2 listo.
+- **Foco inmediato:** Crear la estructura de extensión para 3D Slicer (`SEEGPlanner/`) con clase principal, widget Qt y lógica base probada en Slicer v5.12.4, actualizando simultáneamente `ReferenciaTecnica.md`.
 
 ---
 
@@ -24,6 +24,7 @@
 - **2026-10-14 — Tipo de módulo (ScriptedLoadableModule en Python 3):** Se opta por un módulo programado en Python frente a C++ compilado para permitir máxima agilidad de desarrollo, facilidad de mantenimiento e integración con ecosistema científico (NumPy, SciPy) sin requerir compilación compleja en la máquina del usuario.
 - **2026-10-14 — Protocolo de comunicación (OpenIGTLink):** Para el envío de datos de trayectoria a quirófano y neuronavegadores comerciales/abiertos, se fija OpenIGTLink (mediante `OpenIGTLinkIF` / `pyigtl`) por ser el estándar abierto internacional de referencia en robótica médica y neuronavegación.
 - **2026-10-14 — Marco de referencia electrofisiológico (Sistema EEG 10-20):** Se formaliza el uso de los 4 fiduciales anatómicos de referencia (Nasion, Inion, LPA, RPA) para calcular de forma analítica/geodésica sobre la superficie del cuero cabelludo las coordenadas de los electrodos 10-20 como potenciales puntos de entrada óseos.
+- **2026-10-14 — Validación de fiduciales 10-20, orientación de normales craneales y sockets no bloqueantes:** Durante la revisión adversarial de arquitectura de la Fase 2, se fijan tres salvaguardas: 1) Validación explícita de nombres canónicos y espacio RAS en los nodos `vtkMRMLMarkupsFiducialNode` (Nasion, Inion, LPA, RPA); 2) Orientación estricta de la normal de la superficie ósea en el punto de inserción (garantizando que el vector normal apunte hacia el exterior del cráneo antes de evaluar la perpendicularidad del tornillo guía); 3) Comunicación OpenIGTLink estrictamente asíncrona o no bloqueante para impedir bloqueos del hilo principal de eventos de Qt en 3D Slicer.
 - **2026-10-14 — Adopción de SDD (dbv-specs-ops v2.9.0):** El desarrollo se estructura estrictamente mediante las 6 fases de ingeniería asistida por IA (`/spec` → `/plan` → `/build` → `/test` → `/code-simplify` → `/ship`) para asegurar calidad y trazabilidad exigidas en un TFG de Ingeniería de la Salud.
 
 ---
