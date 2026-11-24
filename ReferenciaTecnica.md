@@ -205,9 +205,67 @@ El proyecto sigue la disciplina **Spec-Driven Development (SDD)** mediante el fr
 5. **/code-simplify (Simplificación):** Auditoría estricta de seguridad, refactorización y eliminación de código redundante.
 6. **/ship (Entrega):** Documentación final del hito, actualización de `CHANGELOG.md` y etiquetado de versión en Git.
 
----
-
 ## 7. Diario Cronológico de Avances y Decisiones
+
+### [2026-11-13] — Fase 8 Completada: Validación Cuantitativa, Benchmarks, Manual Clínico y Memoria de TFG
+- **Avance:** Culminación completa de los requisitos del TFG mediante validación end-to-end de las 5 etapas clínicas, generación de manual de usuario exhaustivo y formalización de la memoria académica para la Universidad de Málaga.
+- **Implementación y Benchmarks:**
+  1. `Testing/Python/test_validation_pipeline.py`: Suite de validación integral con generador anatómico de referencia determinístico offline (resolución 1.0 mm, cráneo y estructuras diana con morfologías cóncavas).
+  2. Benchmarks cuantitativos: precisión de longitud ($MAE < 10^{-5}$ mm), precisión de ángulo óseo ($< 0.05^\circ$), repetibilidad del centroide ($100\%$) y sensibilidad/especificidad en detección de colisiones ($100\%$). Latencias subsegundo en todas las fases ($\le 0.12$ s en superficie, $\le 0.08$ s en 10-20, $< 5$ ms en colisión).
+  3. `dbv-specs-ops/docs/USER_MANUAL.md`: Manual de usuario clínico paso a paso estructurado en los 5 pasos del panel de Slicer, con tabla de códigos semafóricos de seguridad y guía de troubleshooting.
+  4. `dbv-specs-ops/docs/MEMORIA_TFG_ESTRUCTURA.md`: Memoria oficial de TFG estructurada según la normativa de la UMA (Grado en Ingeniería de la Salud) con capítulos 1 a 6, formalización matemática en KaTeX y guión de defensa ante el tribunal.
+- **Suite de Pruebas:** Total elevado a 49 tests pasando al 100% con código 0.
+
+### [2026-11-13] — Fase 7 Completada: Exportación Estereotáctica Abierta y Conector OpenIGTLink
+- **Avance:** Implementación de exportación a formatos abiertos (JSON, CSV resumen y detallado, Slicer Markups JSON v1.0.0) y conector de red OpenIGTLink v1/v2 nativo en Python.
+- **Implementación de Componentes:**
+  1. `Logic/igtlink_exporter.py`: Serializadores de ficheros, conversión determinística RAS vs. LPS, cálculo de CRC-64 ECMA-182 y empaquetador binario de 58 bytes big-endian (`TRANSFORM` y `POINT`) con sockets no bloqueantes (timeout 2.0 s).
+  2. `SEEGPlanner.py`: Sección 5 de la GUI en `SEEGPlannerWidget` con selectores de formato, sistema de referencia (RAS/LPS), archivo y controles de transmisión OpenIGTLink en tiempo real.
+  3. `Testing/Python/test_export_standalone.py`: 11 tests unitarios verificando formatos, CRC-64, paquetes binarios y transmisión contra socket mock.
+
+### [2026-11-05] — Fase 6 Completada: Interfaz Gráfica Avanzada y Cuadro de Mandos Clínico
+- **Avance:** Reestructuración guiada en 4 pasos secuenciales, cuadro de mandos interactivo central con semáforo de seguridad en tiempo real, visor de contactos de registro y gestión atómica de la escena MRML.
+- **Implementación de Componentes:**
+  1. `SEEGPlanner.py`: `trajectoriesTableWidget` con semáforo visual (verde $< 30^\circ$, ámbar $\ge 30^\circ$, rojo ante colisiones), `contactsTableWidget` detallando coordenadas RAS y distancias distales (E01-E18).
+  2. Métodos `focusTrajectoryInViews` (recentrado ortogonal 2D) y `removePlannedTrajectoryByIndex` (eliminación atómica en memoria y purgado de nodos en `slicer.mrmlScene` para evitar nodos huérfanos).
+  3. `Testing/Python/test_ui_logic_standalone.py`: 6 tests unitarios verificando la lógica de la interfaz.
+
+### [2026-11-05] — Fase 5 Completada: Modelado 3D de Electrodos, Pernos Guía y Colisiones Segmento-Segmento
+- **Avance:** Modelado tridimensional paramétrico de electrodos multicontacto y perno guía óseo, cálculo de distribución de contactos y algoritmo analítico exacto de detección de colisiones.
+- **Implementación de Componentes:**
+  1. `Logic/trajectory_planner.py`: Dataclasses `ElectrodeConfig`, `ContactPoint`, `TrajectoryConflict`. Algoritmo `calculate_electrode_contacts`, generador de malla 3D `generate_electrode_tube_polydata` con perno de titanio coaxial (2.5 mm x 15 mm) y algoritmo analítico continuo $\mathcal{O}(1)$ de distancia mínima entre segmentos 3D `compute_segment_to_segment_distance`.
+  2. Función `check_trajectory_conflicts`: Auditoría simultánea de colisión mecánica de pernos en cráneo ($< 10$ mm) y proximidad parenquimatosa ($< 3$ mm).
+  3. `Testing/Python/test_trajectories_standalone.py`: 12 tests unitarios.
+
+### [2026-11-05] — Fase 4 Completada: Superficie Craneal 3D, Normales y Proyección EEG 10-20 por Ray-Casting
+- **Avance:** Reconstrucción tridimensional de la cabeza y proyección de electrodos 10-20 sobre la anatomía real del paciente.
+- **Implementación de Componentes:**
+  1. `Logic/skull_surface_extractor.py`: Extracción con *Flying Edges 3D* / *Marching Cubes*, filtrado de conectividad, suavizado sinc y cálculo de normales locales orientadas al exterior con `get_surface_normal_at_point`.
+  2. `Logic/eeg_1020_calculator.py`: Algoritmo `project_points_to_surface_mesh` con ray-casting acelerado mediante `vtkOBBTree`.
+  3. `Testing/Python/test_surface_standalone.py`: 6 tests unitarios.
+
+### [2026-10-29] — Fase 3 Completada: Gestión de Volúmenes MRI y Localización de Dianas Anatómicas
+- **Avance:** Implementación del flujo integral de control de calidad para resonancia magnética cerebral y extracción analítica de centroides diana estereotácticos a partir de segmentaciones MRML.
+- **Implementación de Componentes:**
+  1. `Logic/target_manager.py`: Creación del módulo central de análisis volumétrico con dataclasses `VolumeMetadata` y `TargetStructure`. Incluye `validate_volume_metadata` para comprobar espaciado de vóxeles ($\le 1.5$ mm) y `compute_segment_target` para computar el centroide espacial ponderado en RAS ($C_{\text{RAS}} = \text{IJKToRAS} \cdot C_{\text{IJK}}$), volumen en $\text{mm}^3$ y verificación de contención en la máscara anatómica (previniendo dianas en ventrículos en geometrías cóncavas).
+  2. `SEEGPlanner.py`: Integración en `SEEGPlannerLogic` de los métodos `validateAndInspectVolume`, `alignAndCenterVolume` y `extractTargetsFromSegmentation`.
+  3. `SEEGPlannerWidget`: Ampliación de la GUI con tarjeta informativa de propiedades del volumen MRI, botón de centrado ortogonal, selector de nodos `vtkMRMLSegmentationNode`, tabla interactiva de dianas detectadas y sincronización automática del nodo de marcas `SEEG_Targets` con el planificador de trayectorias.
+- **Validación y Pruebas Automatizadas:**
+  - Nueva suite `test_targets_standalone.py` (6 pruebas de control de volumen, geometrías convexas y cóncavas superadas; 11 pruebas unitarias totales).
+  - Ampliación de la suite integrada de Slicer `SEEGPlannerTest` (`test_SEEGPlanner_VolumeAndTargets`) verificada con éxito dentro de 3D Slicer v5.12.3 (`SLICER_TEST_SUCCESSFUL`).
+
+### [2026-10-29] — Fase 2 Completada: Implementación y Validación del Esqueleto de la Extensión
+- **Avance:** Creación completa de la estructura de la extensión `SEEGPlanner/` para 3D Slicer con todos sus componentes funcionales.
+- **Implementación de Componentes:**
+  1. `SEEGPlanner.py`: Módulo principal que integra `ScriptedLoadableModule` (metadatos), `SEEGPlannerWidget` (panel nativo Qt/CTK estructurado en 4 secciones guiadas: MRI, EEG 10-20, Dianas/Trayectorias y Exportación) y `SEEGPlannerLogic` (gestor de nodos MRML de fiduciales y líneas de trayectoria).
+  2. `Logic/result.py`: Infraestructura tipada bajo el patrón `Result` (`Ok[T]` y `Err`) cumpliendo los estándares de un solo `return` y validaciones estrictas.
+  3. `Logic/eeg_1020_calculator.py`: Algoritmo geométrico de interpolación esférica de arcos sagital, coronal y circunferencial según estándar 10-20 a partir de Nasion, Inion, LPA y RPA.
+  4. `Logic/trajectory_planner.py`: Cálculo analítico de vectores de trayectoria, distancias euclídeas (longitud de electrodo) y evaluación del ángulo de perpendicularidad ósea respecto a la normal del cráneo.
+  5. `Logic/igtlink_exporter.py`: Generador de matrices de transformación 4x4 y formateador de payloads compatibles con OpenIGTLink y exportación a archivos JSON.
+- **Validación y Pruebas Automatizadas:**
+  - Ejecución de la suite unitaria independiente `test_logic_standalone.py` (5 pruebas matemáticas superadas).
+  - Verificación en el entorno nativo de 3D Slicer v5.12.3 en modo batch (`run_slicer_test.py`), confirmando la correcta creación y manipulación de nodos `vtkMRMLMarkupsFiducialNode` y `vtkMRMLMarkupsLineNode` en la escena médica (`SLICER_TEST_SUCCESSFUL`).
+- **Scripts de Lanzamiento:** Creación de scripts multiplataforma `start.sh` / `stop.sh` (macOS/Linux) y `start.cmd` / `stop.cmd` (Windows).
 
 ### [2026-10-14] — Inicialización y Adopción del Framework SDD
 - **Avance:** Configuración del repositorio Git e integración del framework `dbv-specs-ops` v2.9.0 en la subcarpeta `dbv-specs-ops/`.

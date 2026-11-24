@@ -39,8 +39,10 @@ SEEGPlanner/
 │       └── SEEGPlanner.ui               # Diseño de interfaz gráfica Qt (opcional mediante Qt Designer)
 ├── Logic/
 │   ├── __init__.py
+│   ├── result.py                        # Tipos discriminados Result (Ok/Err) para robustez
 │   ├── eeg_1020_calculator.py           # Algoritmo de mapeo geométrico y arcos 10-20
 │   ├── trajectory_planner.py            # Cálculo de vectores, distancias, longitud y ángulos de seguridad
+│   ├── target_manager.py                # Extracción de centroides diana, volúmenes y validación MRI
 │   ├── skull_surface_extractor.py       # Extracción y cálculo de normales de la superficie craneal
 │   └── igtlink_exporter.py              # Exportación y envío de mensajes OpenIGTLink
 └── Testing/

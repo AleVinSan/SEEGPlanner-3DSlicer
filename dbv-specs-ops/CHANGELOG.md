@@ -9,6 +9,75 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Sin publicar] / [Unreleased]
 
+*(Sin cambios pendientes tras la publicación de la versión 1.0.0)*
+
+---
+
+## [1.0.0] — 2026-11-24
+
+Primera versión oficial de **SEEGPlanner**, extensión de código abierto para **3D Slicer** (v5.12+) destinada a la planificación asistida y automatizada de cirugía de electrodos cerebrales en estéreo-electroencefalografía (SEEG) para pacientes con epilepsia farmacorresistente. Trabajo de Fin de Grado desarrollado por Alejandra Viñegla Sánchez (Universidad de Málaga).
+
+### Added
+- **SEEGPlanner (Fase 8):** Banco de pruebas, validación cuantitativa end-to-end, manual de usuario clínico y memoria del TFG.
+  - Implementación de la suite de validación integral sobre resonancia magnética cerebral `Testing/Python/test_validation_pipeline.py` con generador anatómico de referencia determinístico offline (alta resolución 1.0 mm, cráneo y estructuras diana con morfologías cóncavas ventriculares).
+  - Verificación cuantitativa de exactitud geométrica submilimétrica (error de longitud $< 10^{-5}$ mm, error de perpendicularidad ósea $< 0.05^\circ$) y repetibilidad determinística del centroide en máscara ($100\%$).
+  - Auditoría de sensibilidad y especificidad ($100\%$) del detector analítico de colisiones multi-electrodo frente a distancias umbral críticas ($10.0$ mm para pernos óseos craneales y $3.0$ mm para trayectorias intracraneales).
+  - Perfilado de latencias computacionales clínicas: extracción de isosuperficie ($\sim 0.12$ s), proyección 10-20 ($\sim 0.08$ s) y evaluación multi-electrodo ($< 5$ ms), garantizando interactividad a 60 FPS en 3D Slicer.
+  - Redacción del Manual de Usuario Clínico oficial `docs/USER_MANUAL.md`: guía paso a paso cubriendo los 5 pasos quirúrgicos del panel de Slicer, tabla semafórica de códigos de color y guía de resolución de incidencias en quirófano.
+  - Redacción de la Memoria Oficial y Guía Académica de TFG `docs/MEMORIA_TFG_ESTRUCTURA.md`: estructura canónica conforme a la normativa oficial de la Universidad de Málaga (Grado en Ingeniería de la Salud), con resumen bilingüe, capítulos del 1 al 6, formalización matemática en KaTeX, comparativa técnica frente a estaciones comerciales y guión de defensa ante el tribunal.
+  - Total de pruebas unitarias y de validación elevadas a 49 tests pasando al 100% con código 0.
+- **SEEGPlanner (Fase 7):** Exportación estereotáctica de datos a formatos abiertos y conector de red OpenIGTLink.
+  - Submódulo `Logic/igtlink_exporter.py` enriquecido con serializadores a formatos abiertos: JSON estructurado, CSV quirúrgico (resumen y detallado fila por fila para contactos) y Slicer Markups JSON oficial (`.mrk.json` conforme al schema v1.0.0).
+  - Soporte de conversión paramétrica determinística de coordenadas espaciales médicas entre sistemas RAS (nativo de 3D Slicer) y LPS (estándar DICOM, robots ROSA y estaciones Brainlab/Medtronic) con transformación de matrices homogéneas 4x4.
+  - Implementación de motor de protocolo binario OpenIGTLink v1/v2 puro en Python: cálculo de checksum CRC-64 ECMA-182 canónico, empaquetado de cabecera de 58 bytes big-endian (`>H12s20sIIQQ`) y serializadores de mensajes de tipo `TRANSFORM` (matriz 4x4 en 48 bytes) y `POINT` (coordenadas de entrada, diana y contactos en bloques de 136 bytes).
+  - Cliente de transmisión de red OpenIGTLink mediante sockets no bloqueantes con timeout estricto defensivo ($\le 2.0$ s), garantizando que la GUI de Slicer nunca se congele en caso de desconexión del servidor.
+  - Sección en interfaz de usuario (`SEEGPlannerWidget`): panel desplegable "Paso 5: Exportación Quirúrgica & OpenIGTLink" con selectores de formato, sistema de referencia (RAS/LPS), selección de fichero y controles de envío por red con monitor de estado en tiempo real.
+  - Métodos orquestadores en `SEEGPlannerLogic`: `exportPlanToFile` y `transmitPlanViaOpenIGTLink`.
+  - Suite de pruebas unitarias standalone `Testing/Python/test_export_standalone.py` (11 tests nuevos, 46 tests en total pasando al 100%).
+  - Caso de prueba de integración en `SEEGPlannerTest`: `test_SEEGPlanner_ExportAndOpenIGTLink`.
+- **SEEGPlanner (Fase 6):** Interfaz gráfica avanzada y cuadro de mandos clínico para cirugía SEEG en 3D Slicer.
+  - Estructuración de `SEEGPlannerWidget` en un flujo de trabajo guiado en 4 pasos quirúrgicos secuenciales con `ctkCollapsibleButton` e indicadores de progreso.
+  - Sección 4: Cuadro de mandos central (`trajectoriesTableWidget`) con tabla interactiva que lista todas las trayectorias con semáforo visual de seguridad en tiempo real (verde para trayectorias seguras con ángulo $< 30^\circ$, ámbar para ángulos no óptimos $\ge 30^\circ$, rojo para conflictos espaciales o de perno).
+  - Sub-tabla inspectora de contactos de registro (`contactsTableWidget`) desplegada automáticamente al seleccionar un electrodo, detallando índice, etiqueta anatómica (E01-E18), distancia milimétrica a la punta y coordenadas tridimensionales en espacio RAS.
+  - Funcionalidad de recentrado automático 2D/3D (`focusTrajectoryInViews`): sincroniza los visores axiales, coronales y sagitales de 3D Slicer sobre el punto medio de la trayectoria activa para validación multimodal inmediata.
+  - Eliminación atómica de trayectorias planificadas (`removePlannedTrajectoryByIndex`): purgado sincronizado de la colección en memoria y de los nodos MRML (`vtkMRMLMarkupsLineNode`, `vtkMRMLModelNode`) de la escena de Slicer para evitar nodos fantasma.
+  - Guardas defensivas `hasattr(slicer, "mrmlScene")` en todos los métodos de lógica para garantizar desacoplamiento total en ejecución standalone sin GUI.
+  - Suite de pruebas unitarias standalone `Testing/Python/test_ui_logic_standalone.py` (6 tests nuevos, 35 tests en total pasando al 100%).
+  - Caso de prueba de integración de interfaz de usuario en `SEEGPlannerTest` (`test_SEEGPlanner_ClinicalDashboardAndUI`).
+- **SEEGPlanner (Fase 5):** Cálculo y trazado de trayectorias de electrodos SEEG, modelado 3D con calibre milimétrico, perno guía y seguridad multi-electrodo.
+  - Submódulo `Logic/trajectory_planner.py` enriquecido con `ElectrodeConfig`, `ContactPoint` y `TrajectoryConflict`.
+  - Algoritmo analítico `calculate_electrode_contacts` para distribución distal de anillos de registro desde la diana con espaciado y longitudes clínicas configurables.
+  - Generador de mallas poligonales VTK `generate_electrode_tube_polydata` combinando el tubo del electrodo (`vtkTubeFilter`) y el perno de anclaje craneal coaxial en un único `vtkPolyData` optimizado con normales exteriores.
+  - Algoritmo analítico exacto de distancia euclídea mínima entre segmentos 3D en el espacio `compute_segment_to_segment_distance` para tratar casos paralelos, oblicuos y cruzados.
+  - Algoritmo de detección de conflictos `check_trajectory_conflicts` para evaluación simultánea de colisión de pernos en cráneo ($< 10.0$ mm) y proximidad parenquimatosa intracraneal ($< 3.0$ mm).
+  - Interfaz de usuario en `SEEGPlannerWidget`: espines de calibre (diámetro, contactos, perno), casilla de renderizado 3D volumétrico, botón de evaluación global de conflictos y reporte semafórico en panel de métricas.
+  - Orquestación en `SEEGPlannerLogic`: soporte de modelado tubular y evaluación multi-electrodo, ampliado en `SEEGPlannerTest`.
+  - Suite de pruebas unitarias standalone `Testing/Python/test_trajectories_standalone.py` (12 tests nuevos, 29 en total pasando al 100%).
+- **SEEGPlanner (Fase 4):** Mapeo del sistema EEG 10-20 sobre la superficie craneal y trazado de rayos.
+  - Submódulo `Logic/skull_surface_extractor.py` con `SurfaceExtractionParams`, extracción de superficie con `vtkFlyingEdges3D`/`vtkMarchingCubes`, filtrado de conectividad (`vtkPolyDataConnectivityFilter`), suavizado sinc (`vtkWindowedSincPolyDataFilter`) y cálculo de vector normal exterior local (`get_surface_normal_at_point`).
+  - Algoritmo de proyección milimétrica de electrodos 10-20 mediante trazado de rayos (*ray-casting*) con aceleración espacial `vtkOBBTree` en `Logic/eeg_1020_calculator.py` con fallback analítico defensivo.
+  - Métodos orquestadores en `SEEGPlannerLogic`: `generateHeadSurfaceModel` (generación de `vtkMRMLModelNode` semitransparente color piel) y `compute1020Grid` con proyección a malla cutánea e integración con el cálculo de trayectorias SEEG y normales de inserción ósea.
+  - Interfaz de usuario ampliada en `SEEGPlannerWidget`: asistente interactivo de fijación para Nasion, Inion, LPA y RPA, selector y generador de superficie cutánea 3D y control de proyección sobre superficie.
+  - Suite de pruebas unitarias standalone `Testing/Python/test_surface_standalone.py` (6 tests nuevos, 17 en total pasando al 100%).
+- **SEEGPlanner (Fase 3):** Localización y gestión de volúmenes neuroanatómicos MRI y estructuras diana cerebrales.
+  - Submódulo `Logic/target_manager.py` con dataclasses `VolumeMetadata` y `TargetStructure`.
+  - Algoritmo `compute_segment_target` para cálculo de centroides espaciales ponderados en RAS, volumen del segmento en $\text{mm}^3$ y verificación de contención en máscara (evitando caída en líquido ventricular en geometrías cóncavas).
+  - Algoritmo `validate_volume_metadata` para evaluación de resolución diagnóstica estereotáctica ($\le 1.5$ mm).
+  - Métodos `validateAndInspectVolume`, `alignAndCenterVolume` y `extractTargetsFromSegmentation` en `SEEGPlannerLogic`.
+  - Interfaz gráfica ampliada en `SEEGPlannerWidget` con tarjeta de inspección de vóxel, botón de centrado ortogonal 2D, selector de segmentaciones (`vtkMRMLSegmentationNode`), tabla de dianas detectadas y sincronización automática con selector de trayectorias.
+  - Suite de pruebas unitarias standalone `Testing/Python/test_targets_standalone.py` (6 tests nuevos, 11 en total).
+  - Ampliación de `SEEGPlannerTest` en 3D Slicer con verificación de volúmenes y dianas sintéticas.
+- **SEEGPlanner (Fase 2):** Implementación del esqueleto base de la extensión para 3D Slicer (`SEEGPlanner/`).
+  - Módulo principal `SEEGPlanner.py` con `ScriptedLoadableModule`, interfaz `SEEGPlannerWidget`, lógica `SEEGPlannerLogic` y test integrado `SEEGPlannerTest`.
+  - Submódulo desacoplado `Logic/result.py` con tipado estricto `Result`, `Ok[T]` y `Err`.
+  - Submódulo `Logic/eeg_1020_calculator.py` para cálculo de arcos sagital, coronal y circunferencial según estándar EEG 10-20 a partir de Nasion, Inion, LPA y RPA.
+  - Submódulo `Logic/trajectory_planner.py` para cálculo de longitud, vector director estereotáctico y verificación del ángulo con la normal de la superficie ósea.
+  - Submódulo `Logic/igtlink_exporter.py` para generación de matrices 4x4 y formateo de payloads compatibles con OpenIGTLink y exportación a JSON.
+  - Suite de pruebas unitarias standalone `Testing/Python/test_logic_standalone.py` (5 tests pasando).
+  - Script de validación de integración en 3D Slicer `Testing/Python/run_slicer_test.py` validado con éxito en Slicer v5.12.3.
+  - Scripts de ejecución rápida multiplataforma `start.sh` / `stop.sh` y `start.cmd` / `stop.cmd`.
+  - Licencia `LICENSE` (MIT) y `README.md` en la raíz del proyecto.
+
 ---
 
 ## [2.9.0] — 2026-10-03
@@ -478,7 +547,8 @@ Initial public release of the **dbv-specs-ops** SDD framework.
 
 ---
 
-[Sin publicar]: https://github.com/davidbuenov/dbv-specs-ops/compare/v2.9.0...HEAD
+[Sin publicar]: https://github.com/alejandravs/SEEGPlanner-3DSlicer/compare/v1.0.0...HEAD
+[1.0.0]: https://github.com/alejandravs/SEEGPlanner-3DSlicer/releases/tag/v1.0.0
 [2.9.0]: https://github.com/davidbuenov/dbv-specs-ops/compare/v2.8.0...v2.9.0
 [2.8.0]: https://github.com/davidbuenov/dbv-specs-ops/compare/v2.7.0...v2.8.0
 [2.7.0]: https://github.com/davidbuenov/dbv-specs-ops/compare/v2.6.0...v2.7.0
